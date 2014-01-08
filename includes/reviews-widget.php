@@ -75,11 +75,22 @@
 			$all_products = $woocommerce->query;
 			$filter_ids = array();
 			
-			if ($all_products->unfiltered_product_ids == $all_products->filtered_product_ids) {
-				$filter_ids = $all_products->unfiltered_product_ids;
+			if (!empty($all_products->unfiltered_product_ids) || 
+				!empty($all_products->filtered_product_ids)) {
+				if ($all_products->unfiltered_product_ids == $all_products->filtered_product_ids) {
+					$filter_ids = $all_products->unfiltered_product_ids;
+				} else {
+					$filter_ids = $all_products->filtered_product_ids;
+				}
 			} else {
-				$filter_ids = $all_products->filtered_product_ids;
-			}
+				if (is_shop()) {
+					if ( have_posts() ) {
+						while ( have_posts() ) : the_post();
+							$filter_ids[] = get_the_ID();
+						endwhile;
+					}
+				}
+			}			
 			
 			$all_page_ids = implode(',', $filter_ids);
 			$out_reviews = '';
