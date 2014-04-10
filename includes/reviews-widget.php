@@ -53,9 +53,10 @@
 		
 		$title = apply_filters('widget_title', empty($instance['title']) ? __('Products Reviews', 'woo-reviews-widget') : $instance['title'], $instance, $this->id_base);
 		$number_of_comments = (int) $instance['number_of_comments'];
-		$orderby 		= isset($instance['orderby']) ? $instance['orderby'] : 'rand';    	
-		$order 			= isset($instance['order']) ? $instance['order'] : 'ASC';    
-		$shop_thumbnail = isset($instance['shop_thumbnail'] ) ? $instance['shop_thumbnail'] : '1';		
+		$orderby 			= isset($instance['orderby']) ? $instance['orderby'] : 'rand';    	
+		$order 				= isset($instance['order']) ? $instance['order'] : 'ASC';    
+		$shop_thumbnail		= isset($instance['shop_thumbnail'] ) ? $instance['shop_thumbnail'] : '1';		
+		$assign_categories	= isset($instance['assign_categories'] ) ? $instance['assign_categories'] : '0';		
 		
 		
 		$rand_numeric = rand(1, 2500000);
@@ -72,38 +73,67 @@
 		if ( $title ) echo $before_title . $title . $after_title;
 		
 		/*Custom output html*/
-
-			$query = "SELECT c.* FROM {$wpdb->prefix}posts p, {$wpdb->prefix}comments c WHERE p.ID = c.comment_post_ID AND c.comment_approved > 0 AND p.post_type = 'product' AND p.post_status = 'publish' AND p.comment_count > 0 	ORDER BY ".$order_by." LIMIT 0, ". $number_of_comments;
-			$comments_products = $wpdb->get_results($query, OBJECT);
-			if ($comments_products) {
-				foreach ($comments_products as $comment_product) {
-					$id_ = $comment_product->comment_post_ID;
-					$name_author = 	$comment_product->comment_author;
-					$comment_id  = 	$comment_product->comment_ID;
-						if ( get_the_title($id_) ) { 
-							 $link_title = get_the_title($id_); 
-						}  else { 
-							 $link_title = $id_;
-						}	
-						$image_link   = wp_get_attachment_image_src( get_post_thumbnail_id($id_), 'shop_thumbnail');
-						$out_reviews .= '<li id="comment-'.$comment_id.'" class="list-item">';
-							$out_reviews .= '<a href="'.get_comment_link($comment_id).'" title="'.esc_attr($link_title).'">';
-							if (has_post_thumbnail($id_) && ($shop_thumbnail)) { 
-								$out_reviews .= get_the_post_thumbnail($id_, 'shop_thumbnail');
-							}
-							$out_reviews .= $link_title . '</a>';
-							$out_reviews .= '<p class="content-comment">'.get_comment_excerpt( $comment_id ) .'</p>';
-							$out_reviews .= '<p class="box-author">'.$name_author.'</p>';
-						$out_reviews .= '</li>';						
-				}
-			}
+		if ($assign_categories  == '1') {	
+			$all_products = $woocommerce->query;
+			$filter_ids = array();
 			
-			if ($out_reviews != '') {
-				$out_reviews = '<ul id="comments-list-products" class="comments-list-products">' . $out_reviews . '</ul>'; 
+			if (!empty($all_products->unfiltered_product_ids) || 
+				!empty($all_products->filtered_product_ids)) {
+				if ($all_products->unfiltered_product_ids == $all_products->filtered_product_ids) {
+					$filter_ids = $all_products->unfiltered_product_ids;
+				} else {
+					$filter_ids = $all_products->filtered_product_ids;
+				}
 			} else {
-				$out_reviews = '<ul id="comments-list-products" class="comments-list-products"><li><p class="content-comment">'. __('No products reviews.') . '</p></li></ul>'; 
+				if (is_shop()) {
+					if ( have_posts() ) {
+						while ( have_posts() ) : the_post();
+							$filter_ids[] = get_the_ID();
+						endwhile;
+					}
+				}
+			}			
+			
+			$all_page_ids = implode(',', $filter_ids);
+			$out_reviews = '';
+			
+			$query = "SELECT c.* FROM {$wpdb->prefix}posts p, {$wpdb->prefix}comments c WHERE p.ID = c.comment_post_ID AND c.comment_approved > 0 AND p.post_type = 'product' AND p.post_status = 'publish' AND p.comment_count > 0 AND p.ID IN (".$all_page_ids.") ORDER BY ".$order_by." LIMIT 0, ". $number_of_comments;
+		}	
+		
+		else {
+			$query = "SELECT c.* FROM {$wpdb->prefix}posts p, {$wpdb->prefix}comments c WHERE p.ID = c.comment_post_ID AND c.comment_approved > 0 AND p.post_type = 'product' AND p.post_status = 'publish' AND p.comment_count > 0 ORDER BY ".$order_by." LIMIT 0, ". $number_of_comments;
+		}
+		
+		$comments_products = $wpdb->get_results($query, OBJECT);
+		if ($comments_products) {
+			foreach ($comments_products as $comment_product) {
+				$id_ = $comment_product->comment_post_ID;
+				$name_author = 	$comment_product->comment_author;
+				$comment_id  = 	$comment_product->comment_ID;
+					if ( get_the_title($id_) ) { 
+						 $link_title = get_the_title($id_); 
+					}  else { 
+						 $link_title = $id_;
+					}	
+					$image_link   = wp_get_attachment_image_src( get_post_thumbnail_id($id_), 'shop_thumbnail');
+					$out_reviews .= '<li id="comment-'.$comment_id.'" class="list-item">';
+						$out_reviews .= '<a href="'.get_comment_link($comment_id).'" title="'.esc_attr($link_title).'">';
+						if (has_post_thumbnail($id_) && ($shop_thumbnail)) { 
+							$out_reviews .= get_the_post_thumbnail($id_, 'shop_thumbnail');
+						}
+						$out_reviews .= $link_title . '</a>';
+						$out_reviews .= '<p class="content-comment">'.get_comment_excerpt( $comment_id ) .'</p>';
+						$out_reviews .= '<p class="box-author">'.$name_author.'</p>';
+					$out_reviews .= '</li>';						
 			}
-			echo $out_reviews;		
+		}
+		
+		if ($out_reviews != '') {
+			$out_reviews = '<ul id="comments-list-products" class="comments-list-products">' . $out_reviews . '</ul>'; 
+		} else {
+			$out_reviews = '<ul id="comments-list-products" class="comments-list-products"><li><p class="content-comment">'. __('No products reviews.') . '</p></li></ul>'; 
+		}
+		echo $out_reviews;		
 		/*End output*/
 		
 		echo $after_widget; 
@@ -122,6 +152,8 @@
 		$instance['orderby'] = strip_tags($new_instance['orderby']);
 		$instance['order'] = strip_tags($new_instance['order']);
 		$instance['shop_thumbnail'] = strip_tags($new_instance['shop_thumbnail']);
+		$instance['assign_categories'] =  (int)$new_instance['assign_categories'] ? 1 : 0;
+		
 		$this->flush_widget_cache();
 
 		$alloptions = wp_cache_get( 'alloptions', 'options' );
@@ -145,7 +177,7 @@
 		$orderby = isset( $instance['orderby'] ) ? $instance['orderby'] : 'RAND';
 		$order = isset( $instance['order'] ) ? $instance['order'] : 'ASC';
 		$shop_thumbnail = isset( $instance['shop_thumbnail'] ) ? $instance['shop_thumbnail'] : '1';
-		
+		$assign_categories = isset($instance['assign_categories'] ) ? $instance['assign_categories'] : '0';	
 		?>
 		<p><label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:', 'woo-reviews-widget'); ?></label>
 		<input class="widefat" id="<?php echo esc_attr( $this->get_field_id('title') ); ?>" name="<?php echo esc_attr( $this->get_field_name('title') ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" /></p>
@@ -168,6 +200,10 @@
 		
 		<p>	<input type="checkbox" class="checkbox" id="<?php echo esc_attr( $this->get_field_id( 'shop_thumbnail' ) ) ?>" name="<?php echo esc_attr( $this->get_field_name('shop_thumbnail') ) ?>" value="1" <?php checked(true, $shop_thumbnail ) ?> />
 			<label for="<?php echo $this->get_field_id( 'shop_thumbnail' ) ?>"><?php _e( 'Show thumbnail product', 'woocommerce' ) ?></label>
+		</p>
+		
+		<p>	<input type="checkbox" class="checkbox" id="<?php echo esc_attr( $this->get_field_id( 'assign_categories' ) ) ?>" name="<?php echo esc_attr( $this->get_field_name('assign_categories') ) ?>" value="1" <?php checked(true, $assign_categories ); ?> />
+			<label for="<?php echo $this->get_field_id( 'assign_categories' ) ?>"><?php _e( 'Assign Categories', 'woocommerce' ) ?></label>
 		</p>
 		
 		<?php
