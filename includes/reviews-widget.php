@@ -72,30 +72,8 @@
 		if ( $title ) echo $before_title . $title . $after_title;
 		
 		/*Custom output html*/
-			$all_products = $woocommerce->query;
-			$filter_ids = array();
-			
-			if (!empty($all_products->unfiltered_product_ids) || 
-				!empty($all_products->filtered_product_ids)) {
-				if ($all_products->unfiltered_product_ids == $all_products->filtered_product_ids) {
-					$filter_ids = $all_products->unfiltered_product_ids;
-				} else {
-					$filter_ids = $all_products->filtered_product_ids;
-				}
-			} else {
-				if (is_shop()) {
-					if ( have_posts() ) {
-						while ( have_posts() ) : the_post();
-							$filter_ids[] = get_the_ID();
-						endwhile;
-					}
-				}
-			}			
-			
-			$all_page_ids = implode(',', $filter_ids);
-			$out_reviews = '';
-			
-			$query = "SELECT c.* FROM {$wpdb->prefix}posts p, {$wpdb->prefix}comments c WHERE p.ID = c.comment_post_ID AND c.comment_approved > 0 AND p.post_type = 'product' AND p.post_status = 'publish' AND p.comment_count > 0 AND p.ID IN (".$all_page_ids.") ORDER BY ".$order_by." LIMIT 0, ". $number_of_comments;
+
+			$query = "SELECT c.* FROM {$wpdb->prefix}posts p, {$wpdb->prefix}comments c WHERE p.ID = c.comment_post_ID AND c.comment_approved > 0 AND p.post_type = 'product' AND p.post_status = 'publish' AND p.comment_count > 0 	ORDER BY ".$order_by." LIMIT 0, ". $number_of_comments;
 			$comments_products = $wpdb->get_results($query, OBJECT);
 			if ($comments_products) {
 				foreach ($comments_products as $comment_product) {
