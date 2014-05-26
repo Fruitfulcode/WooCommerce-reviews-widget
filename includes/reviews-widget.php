@@ -36,7 +36,7 @@
 
 	/** @see WP_Widget */
 	function widget($args, $instance) {
-		global $woocommerce,  $wpdb;
+		global $woocommerce,  $wpdb, $product;
 		$order_by = $link_title = '';
 		
 		$cache = wp_cache_get('widget_products_reviews', 'widget');
@@ -57,6 +57,7 @@
 		$order 				= isset($instance['order']) ? $instance['order'] : 'ASC';    
 		$shop_thumbnail		= isset($instance['shop_thumbnail'] ) ? $instance['shop_thumbnail'] : '1';		
 		$assign_categories	= isset($instance['assign_categories'] ) ? $instance['assign_categories'] : '0';		
+		$rating_show 		= isset($instance['rating_html'] ) ? $instance['rating_html'] : '0';		
 		
 		
 		$rand_numeric = rand(1, 2500000);
@@ -110,6 +111,9 @@
 				$id_ = $comment_product->comment_post_ID;
 				$name_author = 	$comment_product->comment_author;
 				$comment_id  = 	$comment_product->comment_ID;
+				$_product = get_product( $id_ );
+				$rating =  intval( get_comment_meta( $comment_id, 'rating', true ) );
+				$rating_html = $_product->get_rating_html( $rating );
 					if ( get_the_title($id_) ) { 
 						 $link_title = get_the_title($id_); 
 					}  else { 
@@ -122,6 +126,11 @@
 							$out_reviews .= get_the_post_thumbnail($id_, 'shop_thumbnail');
 						}
 						$out_reviews .= $link_title . '</a>';
+						if ($rating_show) { 
+							$out_reviews .= $rating_html;
+						}
+						
+
 						$out_reviews .= '<p class="content-comment">'.get_comment_excerpt( $comment_id ) .'</p>';
 						$out_reviews .= '<p class="box-author">'.$name_author.'</p>';
 					$out_reviews .= '</li>';						
@@ -153,6 +162,7 @@
 		$instance['order'] = strip_tags($new_instance['order']);
 		$instance['shop_thumbnail'] = strip_tags($new_instance['shop_thumbnail']);
 		$instance['assign_categories'] =  (int)$new_instance['assign_categories'] ? 1 : 0;
+		$instance['rating_html']=  (int)$new_instance['rating_html'] ? 1 : 0;
 		
 		$this->flush_widget_cache();
 
@@ -178,6 +188,8 @@
 		$order = isset( $instance['order'] ) ? $instance['order'] : 'ASC';
 		$shop_thumbnail = isset( $instance['shop_thumbnail'] ) ? $instance['shop_thumbnail'] : '1';
 		$assign_categories = isset($instance['assign_categories'] ) ? $instance['assign_categories'] : '0';	
+		$rating_show = isset( $instance['rating_html'] ) ? $instance['rating_html'] : '0';
+		
 		?>
 		<p><label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:', 'woo-reviews-widget'); ?></label>
 		<input class="widefat" id="<?php echo esc_attr( $this->get_field_id('title') ); ?>" name="<?php echo esc_attr( $this->get_field_name('title') ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" /></p>
@@ -201,10 +213,16 @@
 		<p>	<input type="checkbox" class="checkbox" id="<?php echo esc_attr( $this->get_field_id( 'shop_thumbnail' ) ) ?>" name="<?php echo esc_attr( $this->get_field_name('shop_thumbnail') ) ?>" value="1" <?php checked(true, $shop_thumbnail ) ?> />
 			<label for="<?php echo $this->get_field_id( 'shop_thumbnail' ) ?>"><?php _e( 'Show thumbnail product', 'woocommerce' ) ?></label>
 		</p>
+
+		<p>	<input type="checkbox" class="checkbox" id="<?php echo esc_attr( $this->get_field_id( 'rating_html' ) ) ?>" name="<?php echo esc_attr( $this->get_field_name('rating_html') ) ?>" value="1" <?php checked(true, $rating_show ) ?> />
+			<label for="<?php echo $this->get_field_id( 'rating_html' ) ?>"><?php _e( 'Show rating (stars)', 'woocommerce' ) ?></label>
+		</p>
 		
 		<p>	<input type="checkbox" class="checkbox" id="<?php echo esc_attr( $this->get_field_id( 'assign_categories' ) ) ?>" name="<?php echo esc_attr( $this->get_field_name('assign_categories') ) ?>" value="1" <?php checked(true, $assign_categories ); ?> />
 			<label for="<?php echo $this->get_field_id( 'assign_categories' ) ?>"><?php _e( 'Assign Categories', 'woocommerce' ) ?></label>
 		</p>
+		
+
 		
 		<?php
 	}

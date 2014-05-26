@@ -43,3 +43,38 @@
 	font-weight:bold;
 }
 
+.woocommerce .widget_products_reviews .star-rating,
+.woocommerce-page .widget_products_reviews .star-rating,
+.widget_products_reviews .star-rating {
+    float: left;
+    font-family: star;
+    font-size: 1em;
+    height: 1em;
+    line-height: 1em;
+    overflow: hidden;
+    position: relative;
+    width: 5.4em;
+	padding-bottom: 10px;
+}
+
+
+.woocommerce .widget_products_reviews .star-rating span:before,
+.woocommerce-page .widget_products_reviews .star-rating span:before,
+.widget_products_reviews .star-rating span:before {
+    content: "SSSSS";
+    left: 0;
+    position: absolute;
+    top: 0;
+}
+
+.woocommerce .widget_products_reviews .star-rating span,
+.woocommerce-page .widget_products_reviews .star-rating span,
+.widget_products_reviews .star-rating span  {
+    float: left;
+    left: 0;
+    overflow: hidden;
+    padding-top: 1.5em;
+    position: absolute;
+    top: 0;
+}
+
