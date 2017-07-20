@@ -3,7 +3,7 @@
 	Plugin Name: WooCommerce - Reviews Widget
 	Plugin URI: http://wordpress.org/plugins/woocommerce-reviews-widget/
 	Description: WooCommerce widget automatically displays associated reviews for products on WooCommerce shop pages.
-	Version: 1.1
+	Version: 1.2
 	Author: fruitfulcode
 	Author URI: http://fruitfulcode.com
 	License: GPL2
